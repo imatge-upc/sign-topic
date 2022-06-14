@@ -163,7 +163,7 @@ def _filter_by_size_dynamic(indices, size_fn, max_positions, raise_exception=Fal
 
     def check_size(idx):
         if isinstance(max_positions, float) or isinstance(max_positions, int):
-            return size_fn(idx) <= max_positions
+            return compare_leq(size_fn(idx), max_positions)
         elif isinstance(max_positions, dict):
             idx_size = size_fn(idx)
             assert isinstance(idx_size, dict)

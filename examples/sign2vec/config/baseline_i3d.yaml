@@ -1,0 +1,64 @@
+# @package _group_
+
+common:
+  fp16: false
+  log_interval: 100
+  wandb_project: sign2vec
+
+task:
+  _name: signs_to_text
+  data: ???
+  normalize: true
+  min_source_positions: 25
+  max_source_positions: 1000
+  max_target_positions: 1024
+  eval_bleu: true
+  eval_bleu_args: '{"beam": 5, "lenpen": 0.3}'
+  eval_bleu_remove_bpe: true
+  #eval_bleu_detok: moses
+  feats_type: "i3d"
+
+dataset:
+  num_workers: 4
+  max_tokens: 20000
+  batch_size: 32
+  skip_invalid_size_inputs_valid_test: true
+  train_subset: train
+  valid_subset: val
+  validate_interval_updates: 500
+
+criterion:
+  _name: label_smoothed_cross_entropy
+
+optimization:
+  max_update: 100000
+  lr: [2e-3]
+  update_freq: [1]
+
+optimizer:
+  _name: adam
+
+lr_scheduler:
+  _name: inverse_sqrt
+  warmup_updates: 10000
+
+bpe:
+  _name: sentencepiece
+  sentencepiece_model: ???
+
+checkpoint:
+  keep_last_epochs: 2
+
+model:
+  _name: sign2text_transformer
+  apply_mask: false
+  dropout: 0.1
+  feature_grad_mult: 0.0
+  freeze_finetune_updates: 0
+  encoder_ffn_embed_dim: 512
+  encoder_attention_heads: 8
+  encoder_layers: 2
+  decoder_attention_heads: 8
+  decoder_layers: 2
+  #body_parts: upperbody,lefthand,righthand
+  

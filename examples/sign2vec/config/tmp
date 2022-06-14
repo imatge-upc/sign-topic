@@ -1,0 +1,111 @@
+
+https://github.com/pytorch/fairseq/blob/main/examples/speech_to_text/docs/mustc_example.md#st
+https://github.com/pytorch/fairseq/blob/main/examples/wav2vec/config/finetuning/base_100h.yaml
+https://github.com/pytorch/fairseq/blob/main/fairseq/dataclass/configs.py
+
+common: #crec que això és el que té per defecte, estaria guay fer un wandb
+  fp16: true
+  log_format: json
+  log_interval: 200
+
+task:
+  _name: signs_to_text
+  data: ???
+  normalize: true
+  labels: ltr
+
+dataset:
+  num_workers: 4
+  max_tokens: 8000
+  skip_invalid_size_inputs_valid_test: true
+  valid_subset: dev_st
+
+criterion:
+  _name: label_smoothed_cross_entropy
+
+optimization:
+  max_update: 100000
+  lr: [2e-3]
+  update_freq: [1]
+
+optimizer:
+  _name: adam
+
+lr_scheduler:
+  _name: inverse_sqrt
+  warmup_updates: 10000
+
+model:
+  _name: sign2text_transformer
+  apply_mask: false
+  activation_dropout: 0.1
+  feature_grad_mult: 0.0
+  freeze_finetune_updates: 0
+
+
+Example to run ASR from En to De
+  fairseq-train ${MUSTC_ROOT}/en-de \
+  --config-yaml config_st.yaml --train-subset train_st --valid-subset dev_st \
+  --save-dir ${ST_SAVE_DIR} \
+  --label-smoothing 0.1 --report-accuracy \
+  --arch s2t_transformer_s --clip-norm 10.0 --seed 1 \
+
+Original:
+fairseq-train ${MUSTC_ROOT}/en-de \
+  --config-yaml config_asr.yaml --train-subset train_asr --valid-subset dev_asr \
+  --save-dir ${ASR_SAVE_DIR} --num-workers 4 --max-tokens 40000 --max-update 100000 \
+  --task speech_to_text --criterion label_smoothed_cross_entropy --label-smoothing 0.1 --report-accuracy \
+  --arch s2t_transformer_s --optimizer adam --lr 1e-3 --lr-scheduler inverse_sqrt \
+  --warmup-updates 10000 --clip-norm 10.0 --seed 1 --update-freq 8
+
+Command to run wav2vec: 
+fairseq-hydra-train \
+    distributed_training.distributed_port=$PORT \
+    task.data=/path/to/data \
+    model.w2v_path=/path/to/model.pt \
+    --config-dir /path/to/fairseq-py/examples/wav2vec/config/finetuning \
+    --config-name base_100h
+
+The command to run ours with how2 sign: 
+srun -p gpi.develop --time 02:00:00 fairseq-hydra-train task.data=../data/how2sign --config-dir examples/signs/config --config-name baseline
+
+
+Per tenir idea d'altres models:
+
+@register_model_architecture("sign2t_transformer", "sign2t_transformer_s")
+def s2t_transformer_s(args):
+    args.encoder_embed_dim = getattr(args, "encoder_embed_dim", 256)
+    args.encoder_ffn_embed_dim = getattr(args, "encoder_ffn_embed_dim", 256 * 8)
+    args.encoder_attention_heads = getattr(args, "encoder_attention_heads", 4)
+    args.decoder_attention_heads = getattr(args, "decoder_attention_heads", 4)
+    args.dropout = getattr(args, "dropout", 0.1)
+    base_architecture(args)
+
+
+@register_model_architecture("sign2t_transformer", "sign2t_transformer_xs")
+def s2t_transformer_xs(args):
+    args.encoder_layers = getattr(args, "encoder_layers", 6)
+    args.decoder_layers = getattr(args, "decoder_layers", 3)
+    args.encoder_ffn_embed_dim = getattr(args, "encoder_ffn_embed_dim", 256 * 4)
+    args.dropout = getattr(args, "dropout", 0.3)
+    s2t_transformer_s(args)
+
+
+@register_model_architecture("sign2t_transformer", "sign2t_transformer_m")
+def s2t_transformer_m(args):
+    args.encoder_embed_dim = getattr(args, "encoder_embed_dim", 512)
+    args.encoder_ffn_embed_dim = getattr(args, "encoder_ffn_embed_dim", 512 * 4)
+    args.encoder_attention_heads = getattr(args, "encoder_attention_heads", 8)
+    args.decoder_attention_heads = getattr(args, "decoder_attention_heads", 8)
+    args.dropout = getattr(args, "dropout", 0.15)
+    base_architecture(args)
+
+
+@register_model_architecture("sign2t_transformer", "sign2t_transformer_l")
+def s2t_transformer_l(args):
+    args.encoder_embed_dim = getattr(args, "encoder_embed_dim", 1024)
+    args.encoder_ffn_embed_dim = getattr(args, "encoder_ffn_embed_dim", 1024 * 4)
+    args.encoder_attention_heads = getattr(args, "encoder_attention_heads", 16)
+    args.decoder_attention_heads = getattr(args, "decoder_attention_heads", 16)
+    args.dropout = getattr(args, "dropout", 0.2)
+    base_architecture(args)

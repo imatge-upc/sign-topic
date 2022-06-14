@@ -134,3 +134,16 @@ experimental/*
 
 # Weights and Biases logs
 wandb/
+
+# pre-commit config
+.*
+
+# sign2vec
+/examples/sign2vec/
+
+# sign_language
+/examples/sign_language/
+
+# example launchers
+/examples/SL_topic_detection/*.sh
+

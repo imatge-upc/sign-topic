@@ -173,6 +173,38 @@ def main(cfg: FairseqConfig) -> None:
     max_epoch = cfg.optimization.max_epoch or math.inf
     lr = trainer.get_lr()
 
+    # Estimate model's FLOPs
+    itr = iterators.GroupedIterator(
+        epoch_itr.next_epoch_itr(
+            shuffle=False, set_dataset_epoch=False,
+        ),
+        1, # update_freq,
+        skip_remainder_batch=cfg.optimization.skip_remainder_batch,
+    )
+    training = model.training
+    if training:
+        model.eval()
+    for i, samples in enumerate(itr):
+        from fvcore.nn import FlopCountAnalysis
+        for i, sample in enumerate(samples):  # delayed update loop
+            model.num_updates = 1
+            # TODO: check if batch size has an impact on FLOPs
+            flops = FlopCountAnalysis(
+                model.cpu(),
+                (sample["net_input"]["src_tokens"].cpu(), sample["net_input"]["src_lengths"].cpu())
+            )  # TODO check wether here we should pass a single sample (without batch dimension) or it's fine to pass a mini-batch
+            logger.info(
+                "estimated total FLOPs = {}".format(
+                    flops.total()
+                )
+            )
+            break
+        break
+    if training:
+        model.train()
+    if torch.cuda.is_available():
+        model.cuda()
+
     train_meter = meters.StopwatchMeter()
     train_meter.start()
     while epoch_itr.next_epoch_idx <= max_epoch:
