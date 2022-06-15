@@ -3,6 +3,14 @@
 
 Welcome to the code repository for the extended abstract titled _Topic Detection in Continuous Sign Language Videos_, which was presented in the _AVA: Accessibility, Vision, and Autonomy Meet_ CVPR 2022 Workshop.
 
+<p align="center">
+  <img src="Attention Visualizations/teaser3.png" width="450">
+  &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; 
+  <img src="Attention Visualizations/features_overview.png" width="450">
+  <br />
+  <br />
+</p>
+
 For instructions on how to run our training pipelines, go to `./examples/SL_topic_detection/` in this repo.
 
 This repo is a fork of the original [Fairseq repository](https://github.com/facebookresearch/fairseq) that we extended for our work.
